@@ -1,0 +1,10 @@
+Simply craft the lift with the following craft recipe:
+
+wood stick wood
+wood mese wood
+wood stick wood
+
+Now place your lift in a shaft or next to a wall. Right click on your lift to get on it and then tap spacebar to go up a level or tap shift to go down a level...
+So easy!!!
+If you want to stop the lift at any time, press the "use" key.
+Now that you have reached your destination simply walk off the lift :)
