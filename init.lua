@@ -145,7 +145,7 @@ minetest.register_craft({
 	output = "lifter:lift",
 	recipe = {
 		{"group:wood", "group:stick", "group:wood"},
-		{"group:wood", "default:mese", "default:wood"},
+		{"group:wood", "default:mese", "group:wood"},
 		{"group:wood", "group:stick", "group:wood"},
 	},
 })
