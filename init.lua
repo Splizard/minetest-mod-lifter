@@ -1,6 +1,129 @@
 
 --Todo make lift go up and down!
 
+doors.register_door("lifter:door", {
+	description = "Lift Door",
+	inventory_image = "lifter_door_inv.png",
+	groups = {choppy=3, cracky=3, oddly_breakable_by_hand=1, flammable=2, door=1},
+	tiles_bottom = {"lifter_door_b.png", "lifter_door.png"},
+	tiles_top = {"lifter_door_a.png", "lifter.png"},
+	only_placer_can_open = false,
+	sounds = default.node_sound_wood_defaults(),
+	sunlight = false
+})
+
+-- should only be ignore if there's not generated map
+local function get_far_node(pos)
+	local node = minetest.get_node(pos)
+	if node.name == "ignore" then
+		minetest.get_voxel_manip():read_from_map(pos, pos)
+		node = minetest.get_node(pos)
+	end
+	return node
+end
+
+
+local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
+	local wnode = get_far_node({x=pos.x+1, y=pos.y+i, z=pos.z})
+	local snode = get_far_node({x=pos.x-1, y=pos.y+i, z=pos.z})
+	local anode = get_far_node({x=pos.x, y=pos.y+i, z=pos.z+1})
+	local dnode = get_far_node({x=pos.x, y=pos.y+i, z=pos.z-1})
+	
+	if wnode.name ~= "lifter:lift" and snode.name ~= "lifter:lift" and 
+		anode.name ~= "lifter:lift" and dnode.name ~= "lifter:lift" then
+		
+			if wnode.name ~= "air" and snode.name ~= "air" and 
+		anode.name ~= "air" and dnode.name ~= "air" then
+				print("lift not found, no air")
+				return
+			end
+			
+			local test = minetest.find_nodes_in_area({x=pos.x-2, y=pos.y+i, z=pos.z-2}, {x=pos.x+2, y=pos.y+i, z=pos.z+2}, "air")
+			if #test == 16 then
+				print("lift not found, too much air")
+				return
+			end
+			
+			if i%20 == 0 then
+				minetest.after(1, fetch_lift, pos, node, clicker, rel, i+plus, open_door, plus)
+			else
+				fetch_lift(pos, node, clicker, rel, i+plus, open_door, plus)
+			end
+	else 	
+		if wnode.name == "lifter:lift" then
+			local name = minetest.get_node({x=pos.x+1, y=pos.y+rel, z=pos.z}).name
+			if name == "air" or name == "ignore" then
+				minetest.remove_node({x=pos.x+1, y=pos.y+i, z=pos.z})
+				minetest.add_node({x=pos.x+1, y=pos.y+rel, z=pos.z}, {name="lifter:lift"})
+			else
+				print("lift blocked")
+			end
+		end
+		if snode.name == "lifter:lift" then
+			local name = minetest.get_node({x=pos.x-1, y=pos.y+rel, z=pos.z}).name
+			if name == "air" or name == "ignore" then
+				minetest.remove_node({x=pos.x-1, y=pos.y+i, z=pos.z})
+				minetest.add_node({x=pos.x-1, y=pos.y+rel, z=pos.z}, {name="lifter:lift"})
+			else
+				print("lift blocked")
+			end
+		end
+		if anode.name == "lifter:lift" then
+			local name = minetest.get_node({x=pos.x, y=pos.y+rel, z=pos.z+1}).name
+			if name == "air" or name == "ignore" then
+				minetest.remove_node({x=pos.x, y=pos.y+i, z=pos.z+1})
+				minetest.add_node({x=pos.x, y=pos.y+rel, z=pos.z+1}, {name="lifter:lift"})
+			else
+				print("lift blocked")
+			end
+		end
+		if dnode.name == "lifter:lift" then
+			local name = minetest.get_node({x=pos.x, y=pos.y+rel, z=pos.z-1}).name
+			if name == "air" or name == "ignore" then
+				minetest.remove_node({x=pos.x, y=pos.y+i, z=pos.z-1})
+				minetest.add_node({x=pos.x, y=pos.y+rel, z=pos.z-1}, {name="lifter:lift"})
+			else
+				print("lift blocked")
+			end
+		end
+		open_door(pos,node,clicker)
+	end
+end
+
+local b1rc = minetest.registered_nodes["lifter:door_b_1"].on_rightclick
+local t1rc = minetest.registered_nodes["lifter:door_t_1"].on_rightclick
+--local t2rc = minetest.registered_nodes["lifter:door_t_2"].on_rightclick
+
+minetest.override_item("lifter:door_b_1", {
+	on_rightclick = function(pos, node, clicker)
+		if clicker:is_player() then
+			minetest.chat_send_player(clicker:get_player_name(), "You called for a lift...")
+		end
+		fetch_lift(pos, node, clicker, -1, 0, b1rc, 1)
+		fetch_lift(pos, node, clicker, -1, 0, b1rc, -1)
+	end
+})
+
+--minetest.override_item("lifter:door_b_2", {
+	--on_rightclick = hijack_click(b2rc)
+--})
+
+minetest.override_item("lifter:door_t_1", {
+	on_rightclick = function(pos, node, clicker)	
+		if clicker:is_player() then
+			minetest.chat_send_player(clicker:get_player_name(), "You called for a lift...")
+		end
+		fetch_lift(pos, node, clicker, -2, -1, t1rc, 1)
+		fetch_lift(pos, node, clicker, -2, -1, t1rc, -1)
+	end
+})
+
+--minetest.override_item("lifter:door_t_2", {
+	--on_rightclick = hijack_click(t2rc)
+--})
+
+local b2rc = minetest.registered_nodes["lifter:door_b_2"].on_rightclick
+
 minetest.register_node("lifter:lift", {
 	tiles = {"lifter.png"},
 	description = "Lift",
@@ -19,6 +142,11 @@ minetest.register_node("lifter:lift", {
 
 		player:set_attach(obj, "", {x=0, y=15, z=0}, {x=0, y=0, z=0})
 		player:set_eye_offset({x=0, y=6, z=0},{x=0, y=0, z=0})
+		
+		local door = minetest.find_node_near(pos, 2, "lifter:door_b_2")
+		if door then
+			b2rc(door, minetest.get_node(door), player)
+		end
 	end,
 })
 
@@ -86,6 +214,14 @@ minetest.register_entity("lifter:travelling_lift", {
 				self.object:setvelocity({x=0, y=0, z=0})
 				self.object:setacceleration({x=0, y=0, z=0})
 			end
+			if (wnode.name:find("door") and not wbnode.name:find("door")) or 
+		 		(snode.name:find("door") and not sbnode.name:find("door")) or 
+		 		(anode.name:find("door") and not abnode.name:find("door")) or 
+		 		(dnode.name:find("door") and not dbnode.name:find("door")) then
+				self.direction = 0
+				self.object:setvelocity({x=0, y=0, z=0})
+				self.object:setacceleration({x=0, y=0, z=0})
+			end
 		end
 		
 		if wnode.name == "air" and snode.name == "air" and anode.name == "air" and dnode.name == "air" then
@@ -120,6 +256,11 @@ minetest.register_entity("lifter:travelling_lift", {
 		
 		
 		if exit then
+			local door = minetest.find_node_near(np, 2, "lifter:door_b_1")
+			if door then
+				b1rc(door, minetest.get_node(door), self.driver)
+			end
+		
 			-- Create node and remove entity
 			minetest.add_node(np, {name="lifter:lift"})
 			self.object:remove()
@@ -135,9 +276,12 @@ minetest.register_entity("lifter:travelling_lift", {
 			return
 		end
 		
-		-- Set gravity
-		self.object:setacceleration({x=0, y=self.direction*10, z=0})
-	
+		if ctrl.jump or ctrl.sneak then
+			-- Set gravity
+			self.object:setacceleration({x=0, y=self.direction*5, z=0})
+		else
+			self.object:setacceleration({x=0, y=0, z=0})
+		end
 	end
 })
 
@@ -147,6 +291,15 @@ minetest.register_craft({
 		{"group:wood", "group:stick", "group:wood"},
 		{"group:wood", "default:mese", "group:wood"},
 		{"group:wood", "group:stick", "group:wood"},
+	},
+})
+
+minetest.register_craft({
+	output = "lifter:door",
+	recipe = {
+		{"group:stick", "group:stick", "group:stick"},
+		{"group:stick", "doors:door_wood", "group:stick"},
+		{"group:stick", "group:stick", "group:stick"},
 	},
 })
 

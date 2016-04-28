@@ -8,3 +8,11 @@ Now place your lift in a shaft or next to a wall. Right click on your lift to ge
 So easy!!!
 If you want to stop the lift at any time, press the "use" key.
 Now that you have reached your destination simply walk off the lift :)
+
+If you want to be able to call your lift, create a lift door:
+
+stick stick stick
+stick door stick
+stick stick stick
+
+Place this in front of a lift shaft with a lift block and you will be able to call the lift :)
