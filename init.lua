@@ -90,17 +90,20 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 	end
 end
 
-local b1rc = minetest.registered_nodes["lifter:door_b_1"].on_rightclick
-local t1rc = minetest.registered_nodes["lifter:door_t_1"].on_rightclick
+local b1rc = minetest.registered_nodes["lifter:door_a"].on_rightclick
 --local t2rc = minetest.registered_nodes["lifter:door_t_2"].on_rightclick
 
-minetest.override_item("lifter:door_b_1", {
+minetest.override_item("lifter:door_a", {
 	on_rightclick = function(pos, node, clicker)
-		if clicker:is_player() then
-			minetest.chat_send_player(clicker:get_player_name(), "You called for a lift...")
+		if string.sub(node.name, -2) == "_a" then
+			if clicker:is_player() then
+				minetest.chat_send_player(clicker:get_player_name(), "You called for a lift...")
+			end
+			fetch_lift(pos, node, clicker, -1, 0, b1rc, 1)
+			fetch_lift(pos, node, clicker, -1, 0, b1rc, -1)
+		else
+			b1rc(pos, node, player)
 		end
-		fetch_lift(pos, node, clicker, -1, 0, b1rc, 1)
-		fetch_lift(pos, node, clicker, -1, 0, b1rc, -1)
 	end
 })
 
@@ -108,21 +111,12 @@ minetest.override_item("lifter:door_b_1", {
 	--on_rightclick = hijack_click(b2rc)
 --})
 
-minetest.override_item("lifter:door_t_1", {
-	on_rightclick = function(pos, node, clicker)	
-		if clicker:is_player() then
-			minetest.chat_send_player(clicker:get_player_name(), "You called for a lift...")
-		end
-		fetch_lift(pos, node, clicker, -2, -1, t1rc, 1)
-		fetch_lift(pos, node, clicker, -2, -1, t1rc, -1)
-	end
-})
 
 --minetest.override_item("lifter:door_t_2", {
 	--on_rightclick = hijack_click(t2rc)
 --})
 
-local b2rc = minetest.registered_nodes["lifter:door_b_2"].on_rightclick
+local b2rc = minetest.registered_nodes["lifter:door_b"].on_rightclick
 
 minetest.register_node("lifter:lift", {
 	tiles = {"lifter.png"},
@@ -143,7 +137,7 @@ minetest.register_node("lifter:lift", {
 		player:set_attach(obj, "", {x=0, y=15, z=0}, {x=0, y=0, z=0})
 		player:set_eye_offset({x=0, y=6, z=0},{x=0, y=0, z=0})
 		
-		local door = minetest.find_node_near(pos, 2, "lifter:door_b_2")
+		local door = minetest.find_node_near(pos, 2, "lifter:door_b")
 		if door then
 			b2rc(door, minetest.get_node(door), player)
 		end
@@ -256,7 +250,7 @@ minetest.register_entity("lifter:travelling_lift", {
 		
 		
 		if exit then
-			local door = minetest.find_node_near(np, 2, "lifter:door_b_1")
+			local door = minetest.find_node_near(np, 2, "lifter:door_a")
 			if door then
 				b1rc(door, minetest.get_node(door), self.driver)
 			end
@@ -269,7 +263,7 @@ minetest.register_entity("lifter:travelling_lift", {
 			if self.driver then
 				self.driver:set_detach()
 				self.driver:set_eye_offset({x=0, y=0, z=0},{x=0, y=0, z=0})
-				pos.y = pos.y-0.2
+				pos.y = pos.y
 				self.driver:setpos(pos)
 			end
 			
