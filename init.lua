@@ -33,7 +33,9 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 		anode.name ~= "lifter:lift" and dnode.name ~= "lifter:lift" then
 		
 			if wnode.name ~= "air" and snode.name ~= "air" and 
-		anode.name ~= "air" and dnode.name ~= "air" then
+			   anode.name ~= "air" and dnode.name ~= "air" and
+			   wnode.name ~= "bones:bones" and snode.name ~= "bones:bones" and 
+			anode.name ~= "bones:bones" and dnode.name ~= "bones:bones"then
 				print("lift not found, no air")
 				return
 			end
