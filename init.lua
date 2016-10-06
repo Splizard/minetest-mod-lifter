@@ -33,7 +33,9 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 		anode.name ~= "lifter:lift" and dnode.name ~= "lifter:lift" then
 		
 			if wnode.name ~= "air" and snode.name ~= "air" and 
-		anode.name ~= "air" and dnode.name ~= "air" then
+			   anode.name ~= "air" and dnode.name ~= "air" and
+			   wnode.name ~= "bones:bones" and snode.name ~= "bones:bones" and 
+			anode.name ~= "bones:bones" and dnode.name ~= "bones:bones"then
 				print("lift not found, no air")
 				return
 			end
@@ -52,7 +54,7 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 	else 	
 		if wnode.name == "lifter:lift" then
 			local name = minetest.get_node({x=pos.x+1, y=pos.y+rel, z=pos.z}).name
-			if name == "air" or name == "ignore" then
+			if name == "air" or name == "ignore" or name == "bones:bones" then
 				minetest.remove_node({x=pos.x+1, y=pos.y+i, z=pos.z})
 				minetest.add_node({x=pos.x+1, y=pos.y+rel, z=pos.z}, {name="lifter:lift"})
 			else
@@ -61,7 +63,7 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 		end
 		if snode.name == "lifter:lift" then
 			local name = minetest.get_node({x=pos.x-1, y=pos.y+rel, z=pos.z}).name
-			if name == "air" or name == "ignore" then
+			if name == "air" or name == "ignore" or name == "bones:bones" then
 				minetest.remove_node({x=pos.x-1, y=pos.y+i, z=pos.z})
 				minetest.add_node({x=pos.x-1, y=pos.y+rel, z=pos.z}, {name="lifter:lift"})
 			else
@@ -70,7 +72,7 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 		end
 		if anode.name == "lifter:lift" then
 			local name = minetest.get_node({x=pos.x, y=pos.y+rel, z=pos.z+1}).name
-			if name == "air" or name == "ignore" then
+			if name == "air" or name == "ignore" or name == "bones:bones" then
 				minetest.remove_node({x=pos.x, y=pos.y+i, z=pos.z+1})
 				minetest.add_node({x=pos.x, y=pos.y+rel, z=pos.z+1}, {name="lifter:lift"})
 			else
@@ -79,7 +81,7 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 		end
 		if dnode.name == "lifter:lift" then
 			local name = minetest.get_node({x=pos.x, y=pos.y+rel, z=pos.z-1}).name
-			if name == "air" or name == "ignore" then
+			if name == "air" or name == "ignore" or name == "bones:bones" then
 				minetest.remove_node({x=pos.x, y=pos.y+i, z=pos.z-1})
 				minetest.add_node({x=pos.x, y=pos.y+rel, z=pos.z-1}, {name="lifter:lift"})
 			else
@@ -101,10 +103,21 @@ minetest.override_item("lifter:door_a", {
 			end
 			fetch_lift(pos, node, clicker, -1, 0, b1rc, 1)
 			fetch_lift(pos, node, clicker, -1, 0, b1rc, -1)
+--			minetest.after(5, b1rc, pos, node, clicker)
 		else
 			b1rc(pos, node, player)
 		end
 	end
+})
+
+minetest.register_abm({
+      nodenames = {"lifter:door_b"},
+      interval = 8,
+      chance = 1,
+      catch_up = false,
+      action = function(pos, node)
+	 minetest.after(1, b1rc, pos, node, "")
+      end
 })
 
 --minetest.override_item("lifter:door_b_2", {
