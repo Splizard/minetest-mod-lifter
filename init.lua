@@ -103,10 +103,21 @@ minetest.override_item("lifter:door_a", {
 			end
 			fetch_lift(pos, node, clicker, -1, 0, b1rc, 1)
 			fetch_lift(pos, node, clicker, -1, 0, b1rc, -1)
+--			minetest.after(5, b1rc, pos, node, clicker)
 		else
 			b1rc(pos, node, player)
 		end
 	end
+})
+
+minetest.register_abm({
+      nodenames = {"lifter:door_b"},
+      interval = 8,
+      chance = 1,
+      catch_up = false,
+      action = function(pos, node)
+	 minetest.after(1, b1rc, pos, node, "")
+      end
 })
 
 --minetest.override_item("lifter:door_b_2", {
