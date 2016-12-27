@@ -116,7 +116,7 @@ minetest.register_abm({
       chance = 1,
       catch_up = false,
       action = function(pos, node)
-	 minetest.after(1, b1rc, pos, node, "")
+	 minetest.after(1, b1rc, pos, node, nil)
       end
 })
 
