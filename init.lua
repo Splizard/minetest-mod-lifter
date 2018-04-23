@@ -2,14 +2,15 @@
 --Todo make lift go up and down!
 
 doors.register_door("lifter:door", {
+	tiles = {{ name = "lifter_door.png", backface_culling = true }},
 	description = "Lift Door",
-	inventory_image = "lifter_door_inv.png",
-	groups = {choppy=3, cracky=3, oddly_breakable_by_hand=1, flammable=2, door=1},
-	tiles_bottom = {"lifter_door_b.png", "lifter_door.png"},
-	tiles_top = {"lifter_door_a.png", "lifter.png"},
-	only_placer_can_open = false,
-	sounds = default.node_sound_wood_defaults(),
-	sunlight = false
+	inventory_image = "lifter_item_door.png",
+	groups = {choppy = 2, oddly_breakable_by_hand = 2, flammable = 2},
+	recipe = {
+		{"group:stick", "group:stick", "group:stick"},
+		{"group:stick", "doors:door_wood", "group:stick"},
+		{"group:stick", "group:stick", "group:stick"},
+	}
 })
 
 -- should only be ignore if there's not generated map
