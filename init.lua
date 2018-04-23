@@ -36,7 +36,13 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 			if wnode.name ~= "air" and snode.name ~= "air" and 
 			   anode.name ~= "air" and dnode.name ~= "air" and
 			   wnode.name ~= "bones:bones" and snode.name ~= "bones:bones" and 
-			anode.name ~= "bones:bones" and dnode.name ~= "bones:bones"then
+			anode.name ~= "bones:bones" and dnode.name ~= "bones:bones" and
+			
+			wnode.name ~= "default:torch" and snode.name ~= "default:torch" and 
+			anode.name ~= "default:torch" and dnode.name ~= "default:torch" and
+			
+			wnode.name ~= "lifter:block" and snode.name ~= "lifter:block" and 
+			anode.name ~= "lifter:block" and dnode.name ~= "lifter:block" then
 				print("lift not found, no air")
 				return
 			end
@@ -53,11 +59,13 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 				fetch_lift(pos, node, clicker, rel, i+plus, open_door, plus)
 			end
 	else 	
+		local foundpos
 		if wnode.name == "lifter:lift" then
 			local name = minetest.get_node({x=pos.x+1, y=pos.y+rel, z=pos.z}).name
 			if name == "air" or name == "ignore" or name == "bones:bones" then
 				minetest.remove_node({x=pos.x+1, y=pos.y+i, z=pos.z})
 				minetest.add_node({x=pos.x+1, y=pos.y+rel, z=pos.z}, {name="lifter:lift"})
+				foundpos = {x=pos.x+1, y=pos.y+i, z=pos.z}
 			else
 				print("lift blocked")
 			end
@@ -67,6 +75,7 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 			if name == "air" or name == "ignore" or name == "bones:bones" then
 				minetest.remove_node({x=pos.x-1, y=pos.y+i, z=pos.z})
 				minetest.add_node({x=pos.x-1, y=pos.y+rel, z=pos.z}, {name="lifter:lift"})
+				foundpos = {x=pos.x-1, y=pos.y+i, z=pos.z}
 			else
 				print("lift blocked")
 			end
@@ -76,6 +85,7 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 			if name == "air" or name == "ignore" or name == "bones:bones" then
 				minetest.remove_node({x=pos.x, y=pos.y+i, z=pos.z+1})
 				minetest.add_node({x=pos.x, y=pos.y+rel, z=pos.z+1}, {name="lifter:lift"})
+				foundpos = {x=pos.x, y=pos.y+i, z=pos.z+1}
 			else
 				print("lift blocked")
 			end
@@ -85,10 +95,20 @@ local function fetch_lift(pos, node, clicker, rel, i, open_door, plus)
 			if name == "air" or name == "ignore" or name == "bones:bones" then
 				minetest.remove_node({x=pos.x, y=pos.y+i, z=pos.z-1})
 				minetest.add_node({x=pos.x, y=pos.y+rel, z=pos.z-1}, {name="lifter:lift"})
+				foundpos = {x=pos.x, y=pos.y+i, z=pos.z-1}
 			else
 				print("lift blocked")
 			end
 		end
+		
+		if foundpos ~= nil then
+			foundpos.y = foundpos.y-1
+			local name = minetest.get_node(foundpos).name
+			if name == "lifter:block" then
+				minetest.remove_node(foundpos)	
+			end
+		end
+		
 		open_door(pos,node,clicker)
 	end
 end
@@ -121,15 +141,6 @@ minetest.register_abm({
       end
 })
 
---minetest.override_item("lifter:door_b_2", {
-	--on_rightclick = hijack_click(b2rc)
---})
-
-
---minetest.override_item("lifter:door_t_2", {
-	--on_rightclick = hijack_click(t2rc)
---})
-
 local b2rc = minetest.registered_nodes["lifter:door_b"].on_rightclick
 
 minetest.register_node("lifter:lift", {
@@ -155,7 +166,21 @@ minetest.register_node("lifter:lift", {
 		if door then
 			b2rc(door, minetest.get_node(door), player)
 		end
+		
+		local support = minetest.find_node_near(pos, 2, "lifter:block")
+		if support then
+			minetest.set_node(support, {name="air"})
+		end
 	end,
+})
+
+minetest.register_node("lifter:block", {
+	tiles = {"default_wood.png"},
+	description = "Lift Support",
+	drawtype = "normal",
+	paramtype = "light",
+	groups = {crumbly=3},
+	drop = "",
 })
 
 minetest.register_entity("lifter:travelling_lift", {
@@ -168,6 +193,7 @@ minetest.register_entity("lifter:travelling_lift", {
 	
 	driver = nil,
 	direction = 0,
+	exiting = false,
 	
 	on_punch = function(self, dtime)
 	end,
@@ -184,6 +210,7 @@ minetest.register_entity("lifter:travelling_lift", {
 		local np = {x=bcp.x, y=bcp.y+1, z=bcp.z}
 		
 		if not self.driver then
+			print("lost driver!")
 			minetest.add_node(np, {name="lifter:lift"})
 			self.object:remove()
 			nodeupdate(np)
@@ -263,7 +290,8 @@ minetest.register_entity("lifter:travelling_lift", {
 		end
 		
 		
-		if exit then
+		if exit and not self.exiting then
+			
 			local door = minetest.find_node_near(np, 2, "lifter:door_a")
 			if door then
 				b1rc(door, minetest.get_node(door), self.driver)
@@ -271,15 +299,26 @@ minetest.register_entity("lifter:travelling_lift", {
 		
 			-- Create node and remove entity
 			minetest.add_node(np, {name="lifter:lift"})
-			self.object:remove()
 			nodeupdate(np)
-			
-			if self.driver then
-				self.driver:set_detach()
-				self.driver:set_eye_offset({x=0, y=0, z=0},{x=0, y=0, z=0})
-				pos.y = pos.y
-				self.driver:setpos(pos)
+			np.y = np.y-1
+			if minetest.get_node(np).name == "air" then
+				minetest.add_node(np, {name="lifter:block"})
 			end
+			self.exiting = true
+			
+			minetest.after(0.2, function(self)
+				if self.driver then
+					
+					self.exiting = false
+					
+					self.driver:set_detach()
+					self.driver:set_eye_offset({x=0, y=0, z=0},{x=0, y=0, z=0})
+					pos.y = pos.y
+					self.driver:setpos(pos)
+					
+					self.object:remove()
+				end
+			end, self)
 			
 			return
 		end
@@ -299,15 +338,6 @@ minetest.register_craft({
 		{"group:wood", "group:stick", "group:wood"},
 		{"group:wood", "default:mese", "group:wood"},
 		{"group:wood", "group:stick", "group:wood"},
-	},
-})
-
-minetest.register_craft({
-	output = "lifter:door",
-	recipe = {
-		{"group:stick", "group:stick", "group:stick"},
-		{"group:stick", "doors:door_wood", "group:stick"},
-		{"group:stick", "group:stick", "group:stick"},
 	},
 })
 
